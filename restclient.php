@@ -1,25 +1,29 @@
 <?php
 
     require_once('request.php');
+    require_once('restutils.php');
     
     namespace Siesta;
     
-    interface SeistaRestClient {
+    interface SiestaRestClient {
         
         protected $config;
+        protected $headers;
+        protected $request;
         
-        public function get($url,$data);
-        public function post($url,$data);
-        public function put($url,$data);
-        public function delete($url,$data);
+        public function get($url, $data);
+        public function post($url, $data);
+        public function put($url, $data);
+        public function delete($url, $data);
         
-        public static function format_data($data,$format);
+        private function rest($url, $data);
         
     }
      
    class restClient implements SiestaRestClient {
         
         protected $config = null;
+        protected $headers;
         protected $request;
                 
         public function __construct($config = array()) {
@@ -58,8 +62,8 @@
             return $this->rest($data,$url);
         }
         
-        private function rest($data,$url) {
-            $data = Siesta\restUtils::data_format($data,'json');
+        private function rest($url,$data) {
+            $data = Siesta\Utils\util::data_format($data,'json');
             return $this->request->execute($url,$data);
         }
         
