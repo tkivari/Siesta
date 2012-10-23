@@ -7,7 +7,6 @@
     interface SeistaRestClient {
         
         private $config;
-        private $method;
         
         public function get($url,$data);
         public function post($url,$data);
