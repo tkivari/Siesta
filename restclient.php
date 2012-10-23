@@ -6,7 +6,7 @@
     
     interface SeistaRestClient {
         
-        private $config;
+        protected $config;
         
         public function get($url,$data);
         public function post($url,$data);
@@ -19,8 +19,8 @@
      
    class restClient implements SiestaRestClient {
         
-        private $config = null;
-        private $request;
+        protected $config = null;
+        protected $request;
                 
         public function __construct($config = array()) {
             
@@ -31,6 +31,10 @@
                 $config
             );
             
+            $this->set_request();
+        }
+        
+        private function set_request() {
             $this->request = new Siesta\request($config);
         }
         
