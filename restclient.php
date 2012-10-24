@@ -1,22 +1,16 @@
 <?php
 
+    namespace Siesta;
+    
     require_once('request.php');
     require_once('restutils.php');
     
-    namespace Siesta;
-    
     interface SiestaRestClient {
-        
-        protected $config;
-        protected $headers;
-        protected $request;
         
         public function get($url, $data);
         public function post($url, $data);
         public function put($url, $data);
         public function delete($url, $data);
-        
-        private function rest($url, $data);
         
     }
      
@@ -39,7 +33,7 @@
         }
         
         private function set_request() {
-            $this->request = new Siesta\request($config);
+            $this->request = new \Siesta\request($config);
         }
         
         public function get($url = null,$data = null) {
@@ -63,7 +57,7 @@
         }
         
         private function rest($url,$data) {
-            $data = Siesta\Utils\util::data_format($data,'json');
+            $data = \Siesta\Utils\util::format_data($data,'json');
             return $this->request->execute($url,$data);
         }
         

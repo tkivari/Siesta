@@ -1,8 +1,8 @@
 <?php
 
-    require_once('../restclient.php');
-    
     namespace Siesta\twitter;
+    
+    require_once('../restclient.php');
     
     class restClient extends Siesta\restClient {
         
