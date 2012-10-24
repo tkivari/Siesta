@@ -24,15 +24,16 @@
             
             $this->config = array_merge(
                 array(
-                    'multipart'     =>  false
+                    'multipart'     =>  false,
+                    'use_oauth'     =>  false
                 ),
                 $config
             );
             
-            $this->set_request();
+            $this->setup_request();
         }
         
-        private function set_request() {
+        private function setup_request() {
             $this->request = new \Siesta\request($config);
         }
         
