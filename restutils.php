@@ -49,7 +49,7 @@
             
             if (empty($data)) { return null; }
             
-            if (!in_array($output_format,array('json','object'))) return false;
+            if (!in_array($output_format,array('json','object','array'))) return false;
             
             if ($output_format == 'object') { 
                 
@@ -88,6 +88,22 @@
                 
                 return $data;
             }
+            
+            if ($output_format == 'array') {
+                if (is_array($data)) { return $data; }
+                
+                if (is_object($data)) { return self::object_to_array($data); }
+                
+                $d = json_decode($data);
+                if ($d != null) { return self::object_to_array($d); }
+                else {
+                    // Maybe the data is in a query string type format
+                    $q = self::parse_query_string($data);
+                    return $q ?: null;
+                }
+            }
+            
+            return $data; // could not format data; return unchanged
         }
         
     }

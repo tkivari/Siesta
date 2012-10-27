@@ -2,8 +2,14 @@
 
     require_once('../restclient.php');
     
-    $rest = new \Siesta\restClient();
+    $config = array('color' => 'orange');
+    
+    $rest = new \Siesta\restclient($config);
     $url = 'http://www.cnn.com';
     
     $response = $rest->get($url);
+    
+    echo "<pre>";
+    print_r($response);
+    echo "</pre>";
     

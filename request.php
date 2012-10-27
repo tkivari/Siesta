@@ -2,41 +2,93 @@
 
     namespace Siesta;
     
+    require_once('formdata.php');
+    require_once('oauth.php');
+    require_once('restutils.php');
+    
     class request {
         
         public $method = 'GET';
-        private $oauth = null;
-        private $config = null;
-        private $headers = null;
-        private $delimiter;
+        public $response = null;
         
-        public function __construct($config) {
+        protected $oauth = null;
+        protected $config = null;
+        protected $headers = array();
+        protected $user_agent;
+        
+        private $delimiter;
+        private $form_data;
+        
+        const HEADER_CONTENT_TYPE = 'Content-Type';
+        const HEADER_CONTENT_LENGTH = 'Content-Length';
+        
+        const CONTENT_TYPE_JSON = 'application/json';
+        const CONTENT_TYPE_MULTIPART = 'multipart/form-data';
+        
+        public function __construct($config=array()) {
             
             $this->delimiter = '-----' . uniqid();
-            $this->headers = array();
             $this->config = $config;
+            $user_agent = 'Siesta - Little REST Client ' . $ssl . ' - //github.com/tkivari/Siesta';
+            $this->user_agent = $this->set_user_agent((array_key_exists('user_agent',$this->config)) ? $this->config['user_agent'] : $user_agent);
             
-            if ($this->config['use_oauth'] == true) {
-                $this->oauth = new \Siesta\oauth($this->config());
-                $this->headers = array_merge($this->headers,$this->oauth->authorization_header());
+            // If the user has specified any headers to use, then use them.
+            if (count($this->config['headers'])) {
+                foreach ($this->config['headers'] as $header => $val) {
+                    $this->set_header($header,$val);
+                }
             }
-            if ($this->config['multipart'] == true) {
-                $this->headers['Content-Type'] = 'multipart/form-data; boundary=' . $this->delim;
-                $this->headers['Content-Length'] = strlen($formData);
+            
+            if (count($this->config['oauth_opts'])) {
+                $this->oauth = new \Siesta\oauth($this->config);
+                $this->headers = array_merge($this->headers,$this->oauth->authorization_header());
             }
         }
         
         public function execute($url,$data) {
-            $h = curl_init($url);
+            
+            if (json_decode($data) != null) {
+                $this->set_header(self::HEADER_CONTENT_TYPE, self::CONTENT_TYPE_JSON);
+            }
+            
+            if ($this->config['multipart'] == true) {
+                $this->set_header(self::HEADER_CONTENT_TYPE, self::CONTENT_TYPE_MULTIPART . '; boundary=' . $this->delimiter);
+                $this->form_data = new \Siesta\form_data($this->delimiter);
+                $this->form_data->build(\Siesta\Utils\util::format_data($data,'array'));
+                $this->set_header(self::HEADER_CONTENT_LENGTH, strlen($this->form_data));
+                curl_setopt($c, CURLOPT_POSTFIELDS, $this->form_data);
+            }
+            
+            $c = curl_init($url);
             
             foreach($this->curl_opts() as $name => $value) {
-                curl_setopt($ch, constant($name), $value);
+                curl_setopt($c, constant($name), $value);
+            }
+            
+            $this->response['data'] = curl_exec($c);
+            $this->response['curl_info'] = curl_getinfo($c);
+            $this->response['error_no'] = curl_errno($c);
+            $this->response['error'] = curl_error($c);
+            curl_close($c);
+
+            // If the call was made and there were no errors
+            if ($err == 0) {
+                if ($this->response['curl_info']['http_code'] == 200) {
+                    return $this->response['data'];
+                }
+                else {
+                    throw new \Exception($url . " returned HTTP response: " . $this->response['curl_info']['http_code'], $err);
+                }
+            }
+            else {
+                // If we get here, there was an error:
+                throw new \Exception("Scraping " . $url . " failed: " . $error, $err);
             }
             
         }
         
         private function curl_opts() {
-            return array(
+            return array_merge(array(
                 // Don't use response header
                 'CURLOPT_HEADER'            => false,
                 // Return results as string
@@ -48,7 +100,7 @@
                 'CURLOPT_TIMEOUT'           => 45,
 
                 // Set a dummy useragent
-                'CURLOPT_USERAGENT'         => $user_agent,
+                'CURLOPT_USERAGENT'         => $this->user_agent,
 
                 // Follow Location: headers (HTTP 30x redirects)
                 'CURLOPT_FOLLOWLOCATION'    => true,
@@ -68,8 +120,19 @@
 
                 // Allow all encodings
                 'CURLOPT_ENCODING'          => '*/*',
-                'CURLOPT_AUTOREFERER'       => true
-            );
+                'CURLOPT_AUTOREFERER'       => true,
+                
+                // Configure HTTP headers
+                'CURLOPT_HTTPHEADER'        => $this->headers
+            ), $this->config['curl_opts']);
+        }
+        
+        private function set_header($header,$val) {
+            $this->headers[$header] = $val;
+        }
+        
+        private function set_user_agent($user_agent) {
+            $this->user_agent = $user_agent;
         }
         
     }
