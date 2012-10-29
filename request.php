@@ -47,13 +47,17 @@
         
         public function execute($url,$data) {
             
+            if ($this->oauth !== null) {
+                    $this->oauth->set_signature_base_string($data);
+            }
+            
             if (json_decode($data) != null) {
                 $this->set_header(self::HEADER_CONTENT_TYPE, self::CONTENT_TYPE_JSON);
             }
             
             if ($this->config['multipart'] == true) {
                 $this->set_header(self::HEADER_CONTENT_TYPE, self::CONTENT_TYPE_MULTIPART . '; boundary=' . $this->delimiter);
-                $this->form_data = new \Siesta\form_data($this->delimiter);
+                $this->form_data = new \Siesta\Utils\form_data($this->delimiter);
                 $this->form_data->build(\Siesta\Utils\util::format_data($data,'array'));
                 $this->set_header(self::HEADER_CONTENT_LENGTH, strlen($this->form_data));
                 curl_setopt($c, CURLOPT_POSTFIELDS, $this->form_data);
@@ -72,17 +76,17 @@
             curl_close($c);
 
             // If the call was made and there were no errors
-            if ($err == 0) {
+            if ($this->response['error_no'] == 0) {
                 if ($this->response['curl_info']['http_code'] == 200) {
                     return $this->response['data'];
                 }
                 else {
-                    throw new \Exception($url . " returned HTTP response: " . $this->response['curl_info']['http_code'], $err);
+                    throw new \Exception($url . " returned HTTP response: " . $this->response['curl_info']['http_code'], $this->response['error_no']);
                 }
             }
             else {
                 // If we get here, there was an error:
-                throw new \Exception("Scraping " . $url . " failed: " . $error, $err);
+                throw new \Exception("Scraping " . $url . " failed: " . $this->response['error'], $this->response['error_no']);
             }
             
         }

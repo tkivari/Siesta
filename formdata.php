@@ -1,6 +1,6 @@
 <?php
 
-    namespace Siesta;
+    namespace Siesta\Utils;
     
     require_once('restutils.php');
     

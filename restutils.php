@@ -106,4 +106,30 @@
             return $data; // could not format data; return unchanged
         }
         
+        /**
+         * Encodes the string or array passed in a way compatible with OAuth.
+         * If an array is passed each array value will will be encoded.
+         * 
+         * Adapted from safe_encode function from tmhOauth by @themattharris - http://www.github.com/themattharris/tmhOauth
+         *
+         * @param mixed $data the scalar or array to encode
+         * @return $data encoded in a way compatible with OAuth
+         */
+        public static function oauth_encode($data) {
+            if (!is_array($data) && !is_scalar($data)) {
+                $data = self::format_data($data,'array');
+            }
+            if (is_array($data)) {
+                return array_map(array($this, 'safe_encode'), $data);
+            } else if (is_scalar($data)) {
+                return str_ireplace(
+                    array('+', '%7E'),
+                    array(' ', '~'),
+                    rawurlencode($data)
+                );
+            } else {
+                return '';
+            }
+        }
+        
     }
